@@ -9,19 +9,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
-import { Plus } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios'
+import { useRouter } from 'next/navigation';
 
 type Props = {};
 
 const CreateNoteDialog = (props: Props) => {
   const [input, setInput] = React.useState<string>('');
+  const router = useRouter()
+
   const createNotebook = useMutation({
     mutationFn: async () => {
-      const response = await axios.post('api/createNoteBook', { name: input})
+      const response = await axios.post('/api/createNoteBook', { name: input})
       return response.data
     }
   })
@@ -33,11 +36,13 @@ const CreateNoteDialog = (props: Props) => {
       return;
     }
     createNotebook.mutate(undefined, {
-      onSuccess: () => {
-        console.log('Note created successfully');
+      onSuccess: ({note_id}) => {
+        console.log('Note created: ', { note_id });
+        router.push(`/notebook/${note_id}`)
       },
       onError: (error) => {
         console.log('Error: ', error)
+        window.alert("Failed to create new notebook")
       }
     })
   }
@@ -70,7 +75,8 @@ const CreateNoteDialog = (props: Props) => {
             <Button type="reset" variant={'secondary'}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-green-600">
+            <Button type="submit" className="bg-green-600" disabled={createNotebook.isPending}>
+              {createNotebook.isPending && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
               Create
             </Button>
           </div>
